@@ -1,0 +1,1005 @@
+WARN AppiumDoctor  ? ffmpeg is needed to record screen features. Please read htt
+ps://www.ffmpeg.org/ to install it
+
+https://www.ffmpeg.org/ 
+
+
+
+
+复习：
+一、数据库的函数 (Oracle)  简化我们的SQL
+<1>单行函数
+1、字符函数    char  varchar2   varchar
+   length   字符串长度
+   upper    小写转大写
+   lower    大写转小写
+   substr   求子串
+2、数值函数    number(n)   number(m,n)
+   round     四舍五入
+   trunc     截取
+3、日期函数    date
+   sysdate   关键字 获取当前系统时间
+   to_char    date -> char 
+                常用于(抽取)查询 显示日期信息
+     to_char(sysdate, 'yyyy-mm-dd hh24:mi:ss')
+     to_char(sysdate, 'yyyy')
+     to_char(sysdate, 'mm')
+   to_date    char -> date  常用于生成日期数据
+     to_date('2013-11-18', 'yyyy-mm-dd')
+     to_date('2013 11 27 09:08:07', 
+              'yyyy mm dd hh24:mi:ss')
+    
+     13 ?  2013  1913    yy   rr
+     建议使用四位年 yyyy  2013
+
+   months_between(d1, d2)  d1和d2相差几个月
+   add_months(d1, n)   求出n个月以后的d1时间
+   last_day()    本月的最后一天
+   next_day()   下一个星期几
+   trunc(sysdate, 'MONTH')  截取  本月的第一天
+                    'YEAR'       今年的第一天
+   trunc(sysdate)   今天0点
+
+其它：nvl  空值处理函数
+
+二、多表连接 （重点）
+1、什么是表连接？为什么需要表连接？
+由于数据库设计采用3NF,避免数据的冗余、数据不一致的问题。特点是将数据拆分成n张表。
+为了使用一条语句将分散在多张表中的数据同时查到，就需要进行多表连接。
+多表查询：from 表1 别名1, 表2 别名2, ...
+   此时表1(m行)中的每一行，都和表2(n行)中的每一行进行匹配、连接，形成了“笛卡尔积”  m * n 行 很多记录没有意义。
+   所以多表查询时，需要指定表连接条件，去除笛卡尔积，本质就是选择、过滤。
+
+2、表连接的分类
+（1）内连接   inner join  记录会严格匹配
+  1）等值连接     =
+  2）非等值连接  不使用=
+  3）自连接
+
+（2）外连接   outer join  解决一个都不能少的问题
+                 是对内连接的补充
+  1）左外连接
+  2）右外连接
+  3）全外连接
+
+表连接的分类
+1、内连接
+（1）等值连接
+ 两个表的关系是一种等值的关系
+ 一般通过主外键关系体现：
+ s_emp表  *------1 s_dept表  *------1 s_region表
+id(PK)  dept_id(FK) =  id(PK)
+                            region_id(FK)  =  id(PK)
+
+题2：找出Mark在哪个地区上班？
+三个表 s_emp  s_dept  s_region 等值连接
+    使用两个等值连接，将三张表连在一起。
+select e.id, e.first_name, d.name, r.name
+from  s_emp e, s_dept d, s_region r
+where e.dept_id = d.id
+and d.region_id = r.id
+and e.first_name = 'Mark';
+
+        ID FIRST_NAME                NAME          NAME
+---------- ------------------ ------------------
+        4                   Mark               Finance        North America
+
+
+使用inner join 实现3张表连接：
+select e.id, e.first_name, d.name, r.name
+from (s_emp e inner join s_dept d
+on e.dept_id = d.id)
+inner join s_region r
+on d.region_id = r.id
+where e.first_name = 'Mark';
+
+（2）非等值连接   不使用=进行连接
+ 两张表的关系不是等值关系
+  >  <  >=  <=   between and   in(...)
+
+例子1：列出员工的名字、薪水、薪水的级别
+思路：  s_emp        s_salgrade
+   关系：薪水 在losal 和 hisal之间
+                between and 
+select first_name, salary from s_emp;
+
+FIRST_NAME                    SALARY
+------------------------- ----------
+Carmen                          2500
+LaDoris                         1450
+Midori                          1400
+Mark                            1450
+Audry                           1550
+Molly                           1200
+Roberta                         1250
+Ben                             1100
+Antoinette                      1300
+Marta                           1307
+Colin                           1400
+
+FIRST_NAME                    SALARY
+------------------------- ----------
+Henry                           1490
+Yasmin                          1515
+Mai                             1525
+Andre                           1450
+Elena                           1400
+George                           940
+Akira                           1200
+Vikram                           795
+Chad                             750
+Alexander                        850
+Eddie                            800
+
+FIRST_NAME                    SALARY
+------------------------- ----------
+Radha                            795
+Bela                             860
+Sylvie                          1100
+
+已选择25行。
+select * from s_salgrade ;
+ GRADE      LOSAL      HISAL
+------ ---------- ----------
+     1       2000      10000
+     2       1500       1999
+     3       1200       1499
+     4       1000       1199
+     5        500        999
+select e.first_name, e.salary, g.grade
+from s_emp e, s_salgrade g
+where e.salary between g.losal and g.hisal;
+
+已选择25行。
+
+FIRST_NAME                    SALARY      GRADE
+------------------------- ---------- ----------
+Carmen                          2500          1
+Audry                           1550          2
+Yasmin                          1515          2
+Mai                             1525          2
+LaDoris                         1450          3
+Midori                          1400          3
+Mark                            1450          3
+Molly                           1200          3
+Roberta                         1250          3
+Antoinette                      1300          3
+Marta                           1307          3
+
+FIRST_NAME                    SALARY      GRADE
+------------------------- ---------- ----------
+Colin                           1400          3
+Henry                           1490          3
+Andre                           1450          3
+Elena                           1400          3
+Akira                           1200          3
+Ben                             1100          4
+Sylvie                          1100          4
+George                           940          5
+Vikram                           795          5
+Chad                             750          5
+Alexander                        850          5
+
+FIRST_NAME                    SALARY      GRADE
+------------------------- ---------- ----------
+Eddie                            800          5
+Radha                            795          5
+Bela                             860          5
+（3）自连接
+ 如果一张表中两个字段之间有关系，可以采用自连接
+ s_emp表   id             PK 员工id
+          manager_id      FK 领导id 参照于s_emp表的id
+
+select id, first_name, manager_id
+from s_emp;
+
+例子2：查询出员工的名字和领导名字的对应关系？
+分析：当一张表中两个字段之间有关系，使用自连接
+  将一张表通过起别名的方式，模拟成两张表
+   from s_emp e, s_emp m
+  此时一张表中两个字段的关系，就转化为两张表中两个字段的关系。
+
+select e.id, e.first_name, m.first_name
+from s_emp e, s_emp m
+where e.manager_id = m.id;
+select  first_name  ,id,manager_id from s_emp;
+已选择24行。缺一行
+
+ ID FIRST_NAME                FIRST_NAME
+--- ------------------------- -------------
+  2 LaDoris                   Carmen
+  3 Midori                    Carmen
+  4 Mark                      Carmen
+  5 Audry                     Carmen
+  6 Molly                     LaDoris
+  7 Roberta                   LaDoris
+  8 Ben                       LaDoris
+  9 Antoinette                LaDoris
+ 10 Marta                     LaDoris
+ 11 Colin                     Midori
+ 12 Henry                     Midori
+
+ ID FIRST_NAME                FIRST_NAME
+--- ------------------------- -------------
+ 13 Yasmin                    Midori
+ 14 Mai                       Midori
+ 15 Andre                     Midori
+ 16 Elena                     Molly
+ 17 George                    Molly
+ 18 Akira                     Roberta
+ 19 Vikram                    Roberta
+ 20 Chad                      Ben
+ 21 Alexander                 Ben
+ 22 Eddie                     Antoinette
+ 23 Radha                     Antoinette
+
+ ID FIRST_NAME                FIRST_NAME
+--- ------------------------- -------------
+ 24 Bela                      Marta
+ 25 Sylvie                    Marta
+问题：发现Carman不见了
+原因：由于Carman的manager_id是空值 null
+  空值无法与m.id进行匹配，造成了记录的丢失
+空值的影响1：空值参与运算，结果也为空  nvl来转换
+空值的影响2：空值和任何值比较，包括空值本身都无法直接比较(匹配)  结果都为假
+  空值只能通过is null或is not null进行比较
+
+以上都属于内连接(inner join),内连接会进行数据的严格匹配，可能会造成某些记录的丢失(空值的影响)
+
+标准sql:  内连接 inner join on 连接
+select e.id, e.first_name, m.first_name
+from s_emp e
+inner join s_emp m
+on e.manager_id = m.id;
+
+2、外连接  outer join
+ 是对内连接的补充：解决的是一个都不能少的问题
+（1）左外连接  保证左边表的记录一个都不能少
+Oracle特有语法：
+  要想让左边表的记录一个都不能少，在对方添加(+)
+  
+例子3：续例子2，请把Carman找回来
+ 想让e表的记录一个都不能少,在对方m加(+)
+select e.id, e.first_name, m.first_name
+from s_emp e, s_emp m
+where e.manager_id = m.id(+);
+         左               右
+已选择25行。
+
+  ID FIRST_NAME                FIRST_NAME
+---- ------------------------- -----------
+   1 Carmen                      
+   2 LaDoris                   Carmen
+   3 Midori                    Carmen
+   4 Mark                      Carmen
+   5 Audry                     Carmen
+   6 Molly                     LaDoris
+   7 Roberta                   LaDoris
+   8 Ben                       LaDoris
+   9 Antoinette                LaDoris
+  10 Marta                     LaDoris
+  11 Colin                     Midori
+
+  ID FIRST_NAME                FIRST_NAME
+---- ------------------------- -----------
+  12 Henry                     Midori
+  13 Yasmin                    Midori
+  14 Mai                       Midori
+  15 Andre                     Midori
+  16 Elena                     Molly
+  17 George                    Molly
+  18 Akira                     Roberta
+  19 Vikram                    Roberta
+  20 Chad                      Ben
+  21 Alexander                 Ben
+  22 Eddie                     Antoinette
+
+  ID FIRST_NAME                FIRST_NAME
+---- ------------------------- -----------
+  23 Radha                     Antoinette
+  24 Bela                      Marta
+  25 Sylvie                    Marta
+
+标准SQL:  left outer join  on 连接条件
+   如果领导名称是空值，替换成'<Boss>'
+select e.first_name, nvl(m.first_name, '<Boss>') 
+from s_emp e
+left outer join s_emp m
+on e.manager_id = m.id;
+
+左表 left outer join 右表 on ...
+已选择25行。
+
+（2）右外连接  保证右边表的记录一个都不能少
+语法：
+Oracle: 想让右边表的记录一个都不能少，左边添加(+)
+标准SQL: right outer join on 连接条件
+
+（3）全外连接  保证两边表的记录一个都不能少
+语法：
+Oracle: 不允许两边同时添加(+)
+标准SQL: full outer join on 连接条件
+
+创建表： t_emp    t_dept   测试外连接
+
+drop table t_emp;
+drop table t_dept;
+
+create table t_dept(
+  id       number(5)    primary key,
+  name   varchar2(15)  not null
+);
+insert into t_dept values(11, 'Java');
+insert into t_dept values(12, 'C++');
+insert into t_dept values(13, 'DB');
+insert into t_dept values(14, 'Web');
+commit;
+select * from t_dept;
+
+create table t_emp(
+   id        number(5)   primary key,
+   name     varchar2(15),
+   dept_id  number(5)
+);
+insert into t_emp values(1, 'Tom', 11);
+insert into t_emp values(2, 'James', 12);
+insert into t_emp values(3, 'Mary', null);
+insert into t_emp values(4, 'Tony', 13);
+insert into t_emp values(5, 'Ajax', 11);
+insert into t_emp values(6, 'Nill', 12);
+commit;
+select * from t_emp;
+
+现象：Mary没有部门，14号部门没有员工
+
+练习：查询出所有员工的信息以及部门信息
+               t_emp               t_dept
+使用内连接： 造成Mary丢失
+select e.id, e.name, d.name
+from  t_emp e, t_dept d
+where e.dept_id = d.id;
+
+ ID NAME            NAME
+--- --------------- --------
+  1 Tom             Java
+  2 James           C++
+  4 Tony            DB
+  5 Ajax            Java
+  6 Nill            C++
+
+使用左外连接，保证左边t_emp表记录一个都不能少
+Oracle语法：在对方添加(+)
+select e.id, e.name, d.name
+from t_emp e, t_dept d
+where e.dept_id = d.id(+);
+
+  ID NAME            NAME
+---- --------------- --------
+   5 Ajax            Java
+   1 Tom             Java
+   6 Nill            C++
+   2 James           C++
+   4 Tony            DB
+   3 Mary
+
+标准SQL: left outer join  on 连接条件
+select e.id, e.name, d.name
+from t_emp e
+left outer join t_dept d
+on e.dept_id = d.id;
+
+使用右外连接：保证右边记录一个都不能少
+Oracle语法：在对方添加(+)
+select e.id, e.name, d.name
+from t_emp e, t_dept d
+where e.dept_id(+) = d.id;
+
+  ID NAME            NAME
+---- --------------- ------
+   1 Tom             Java
+   2 James           C++
+   4 Tony            DB
+   5 Ajax            Java
+   6 Nill            C++
+                     Web
+
+标准SQL: right outer join on ...
+select e.id, e.name, d.name
+from t_emp e
+right outer join t_dept d
+on e.dept_id = d.id;
+
+使用全外连接：保证两边的记录一个都不能少
+Oracle语法：不允许两边同时使用(+)
+select e.id, e.name, d.name
+from t_emp e, t_dept d
+where e.dept_id(+) = d.id(+);
+
+第 3 行出现错误:
+ORA-01468: 一个谓词只能引用一个外部联接的表
+
+标准SQL: full outer join on ...
+select e.id, e.name, d.name
+from t_emp e
+full outer join t_dept d
+on e.dept_id = d.id;
+
+ ID NAME            NAME
+--- --------------- ------
+  5 Ajax            Java
+  1 Tom             Java
+  6 Nill            C++
+  2 James           C++
+  4 Tony            DB
+  3 Mary
+                    Web
+******************************
+mysql的全连接
+select * from a left join b on a.id = b.id
+union
+select * from a right join b on a.id = b.id
+*****************************
+
+    注：mysql利用左连接和右连接分别查询出左右两边的数据
+    然后利用union去重合并（去掉两边都有的重复数据）
+
+问题解答：
+select length('3月') from dual;
+select first_name, start_date
+from s_emp
+where to_char(start_date, 'MON') = '3月 ';
+
+select start_date, length(to_char(start_date, 'MON')) 
+from s_emp;
+
+select start_date, length(to_char(start_date, 'mm')) 
+from s_emp;
+
+结论:to_char返回的是char类型 定长的  固定3个字符
+
+回顾表连接：
+1、内连接  会严格匹配数据  inner join
+ (1)等值连接
+ (2)非等值连接
+ (3)自连接
+
+2、外连接  一个都不能少    outer join
+ (1)左外连接
+ (2)右外连接
+ (3)全外连接
+
+三、组函数（多行函数、聚集函数）
+ AVG(distinct | all)    求平均值
+ SUM(distinct | all)    求总和
+ COUNT(distinct | all | *) 统计记录条数
+ MAX(distinct | all)   求最大值
+ MIN(distinct | all)   求最小值
+
+子句：group by 分组字段
+       having 分组后的过滤条件
+
+例子1：求出提成的平均值？
+思路：s_emp    commisspion_pct   avg()
+
+select avg(commission_pct)
+from s_emp;
+
+AVG(COMMISSION_PCT)
+-------------------
+                 13
+
+select first_name, commission_pct from s_emp;
+
+FIRST_NAME                COMMISSION_PCT
+------------------------- --------------
+Carmen
+LaDoris
+Midori
+Mark
+Audry
+Molly
+Roberta
+Ben
+Antoinette
+Marta
+Colin                                 10
+
+FIRST_NAME                COMMISSION_PCT
+------------------------- --------------
+Henry                               12.5
+Yasmin                                10
+Mai                                   15
+Andre                               17.5
+Elena
+George
+Akira
+Vikram
+Chad
+Alexander
+Eddie
+
+FIRST_NAME                COMMISSION_PCT
+------------------------- --------------
+Radha
+Bela
+Sylvie
+空值的影响3：绝大部分组函数会忽略空值
+
+解决方案：使用空值转换函数nvl  函数的嵌套调用
+    如果提成为null使用0代替
+
+select avg(nvl(commission_pct, 0))  as avgcomm
+from s_emp;
+
+   AVGCOMM
+----------
+       2.6
+
+结论:avg以及大多数组函数不会将空值考虑在内
+      组函数处理的是所有的非空值 (才有意义)
+      count(*) 除外  会统计空值的行
+
+select count(dept_id) from t_emp;
+COUNT(DEPT_ID)
+--------------
+             5       原因：Mary的dept_id是null 忽略了
+
+select count(id) from t_emp;
+ COUNT(ID)
+----------
+         6           因为id不为空
+
+select count(*) from t_emp;      有几行算几行
+  COUNT(*)
+----------
+         6
+
+create table test1(
+   c1  number(3),
+   c2  number(3)
+);
+insert into test1 values(null, null);
+insert into test1 values(null, null);
+insert into test1 values(null, null);
+commit;
+select * from test1;
+
+select count(*) from test1;
+  COUNT(*)
+----------
+         3
+
+select count(c1) from test1;
+ COUNT(C1)
+----------
+         0
+
+例子2：从员工表中统计一共有多少个部门？
+思路：s_emp  dept_id  count()
+
+select count(dept_id) from s_emp;
+COUNT(DEPT_ID)
+--------------
+            25    不对
+等价于：
+select count(all dept_id) from s_emp;
+如果不写范围，默认是all 统计所有行的dept_id数量
+如果不需要重复，使用distinct关键字 去重
+
+正确的写法：
+select count(distinct dept_id) from s_emp;
+COUNT(DISTINCTDEPT_ID)
+----------------------
+                    12
+
+例子3：统计出各个工资级别有多少个员工？
+思路：
+  表： s_emp  e         s_salgrade  g
+  表连接条件：e.salary between g.losal and g.hisal
+               内连接—非等值连接
+  分组字段：根据级别分组  g.grade
+  组函数： count(e.id)
+
+select g.grade, count(e.id)
+from  s_emp e, s_salgrade  g
+where e.salary between g.losal and g.hisal   
+group by g.grade;
+
+     GRADE COUNT(E.ID)
+---------- -----------
+         1           1
+         2           3
+         3          12
+         4           2
+         5           7
+
+练习：统计出工资级别为5的员工人数？
+思路：使用having子句，分组后统计后，进一步过滤
+select g.grade, count(e.id)
+from  s_emp e, s_salgrade g
+where e.salary between g.losal and g.hisal
+group by g.grade
+having g.grade = 5;
+
+     GRADE COUNT(E.ID)
+---------- -----------
+         5           7
+
+练习：使用两种方法查询出31部门以外的各个部门的平均工资。   结果11行  12-1=11个部门
+解法一：分组前的过滤 where子句
+select  dept_id, avg(salary)
+from s_emp
+where dept_id <> 31
+group by dept_id;
+
+执行顺序：from 找表 -> 再where 选择 -> 分组 group by
+             -> 计算avg()
+
+ DEPT_ID AVG(SALARY)
+-------- -----------
+      42  1081.66667
+      43         900
+      34        1160
+      44        1050
+      32        1490
+      35        1450
+      50        2025
+      41      1247.5
+      45        1089
+      33        1515
+      10        1450
+
+解法二：分组后的过滤  having子句
+select dept_id, avg(salary)
+from s_emp
+group by dept_id
+having dept_id <> 31;
+
+ DEPT_ID AVG(SALARY)
+-------- -----------
+      42  1081.66667
+      43         900
+      34        1160
+      44        1050
+      32        1490
+      35        1450
+      50        2025
+      41      1247.5
+      45        1089
+      33        1515
+      10        1450
+执行顺序：from 找表 -> group by 分组 -> 计算avg()
+              -> having过滤
+
+总的执行顺序：
+from 找表 -> 再where 选择 -> 分组 group by
+  ->select 计算avg() 投影 -> having 分组后过滤  
+  -> order by 排序
+
+   DEPT_ID AVG(SALARY)
+---------- -----------
+        10        1450
+        32        1490
+        33        1515
+        34        1160
+        35        1450
+        41      1247.5
+        42  1081.66667
+        43         900
+        44        1050
+        45        1089
+        50        2025
+
+四、子查询 （sub query） 也称为查询的嵌套
+  使用子查询，可以简化我们的sql思路
+可分为:
+ 1）非关联子查询  （常见）
+ 2）关联子查询     子查询的结果参与表连接
+
+例子1：求出谁的工资最低？
+select id, first_name, salary
+from s_emp;
+
+思路：先查询出最低薪水？   min()
+select min(salary) from s_emp;
+MIN(SALARY)
+-----------
+        750
+
+再查询谁的薪水是750？
+select id, first_name, salary
+from s_emp
+where salary = 750;
+
+ID FIRST_NAME                    SALARY
+-- ------------------------- ----------
+20 Chad                             750
+
+如何使用一条SQL实现？ 子查询  Sub Query
+ 又称为：查询的嵌套
+可以将子查询分为：
+1）主查询   最外层   提供最好的结果
+select id, first_name, salary
+from s_emp
+where salary = (...);
+
+2）子查询   里层   提供部分功能
+select min(salary) from s_emp
+
+组合后的SQL:   (非关联子查询)
+select id, first_name, salary
+from s_emp
+where salary = (select min(salary) 
+                   from s_emp);
+
+ ID FIRST_NAME                    SALARY
+--- ------------------------- ----------
+ 20 Chad                             750
+
+子查询：发现一个问题比较复杂时，可以分解为若干个小问题，依次解决。其中包括主查询和子查询，形成了查询的嵌套。 "化繁为简，分而治之"
+
+子查询执行的顺序：
+  先执行子查询，返回结果后，再执行主查询
+
+子查询的分类：
+1）非关联子查询   不存在关联关系
+2）关联子查询   存在关联关联 需要进行表连接
+
+子查询的结果：一般都有结果
+1）一条记录、单值    salary = 750    min(salary)
+2）多条记录、多值    in(31, 32, 33)
+3）无记录、无值      几乎不用
+
+区分不同的运算符：
+1）单值运算符   =  >   <  >=  <=  <>
+2）多值运算符   in   not in    exists  存在记录
+
+子查询的思路：化繁为简、分而治之   简化sql的思路
+
+例子2：谁和George从事同样的工作？
+思路：s_emp   first_name    title 职位
+第一步：先查询出George从事什么工作？ （子查询）
+select title from s_emp
+where first_name = 'George';
+TITLE
+-------------------------
+Stock Clerk
+
+第二步：查出从事'Stock Clerk'的员工 （主查询）
+select id, first_name, title
+from s_emp
+where title = 'Stock Clerk';
+
+使用一条SQL实现： (非关联子查询)
+select id, first_name, title
+from s_emp
+where title = (select title 
+                 from s_emp
+                 where first_name = 'George')
+and first_name <> 'George';
+
+例子3：找出哪些人是领导？
+select id, first_name, manager_id from s_emp;
+先查询出领导的id:   （子查询）  多值
+select distinct manager_id from s_emp;
+MANAGER_ID
+----------
+         1
+         2
+         3
+         6
+         7
+         8
+         9
+        10
+              <---- 空值    空值排序时 作为无穷大
+
+已选择9行。
+
+使用主查询 结合 子查询：(非关联子查询)
+select id, first_name
+from s_emp
+where id in (select distinct manager_id
+               from s_emp);
+
+        ID FIRST_NAME
+---------- ------------------
+         1 Carmen
+         2 LaDoris
+         3 Midori
+         6 Molly
+         7 Roberta
+         8 Ben
+         9 Antoinette
+        10 Marta
+
+已选择8行。
+
+练习：找出哪些人不是领导？
+select id, first_name
+from s_emp
+where id not in (select distinct manager_id
+                   from s_emp);
+
+未选定行
+为什么一行都没有？
+原因:
+id in(1,3,6,...,null)  只要满足其中一项 就返回真
+等价于： id=1 or id=3 or id=6 or ... or id=null
+
+id not in(1,3,6,...,null)  必须都为真 才返回真
+等价于：id<>1 and id<>3 and id<>6 and ... and id<>null
+    id<>null 比较 一定为假  与操作 结果都为假
+
+空值的影响2: 空值参与一般的比较结果都为假
+
+解决办法：只要排除掉null值即可
+select id, first_name
+from s_emp
+where id not in (select distinct manager_id
+                   from s_emp
+                   where manager_id is not null);
+
+ ID FIRST_NAME
+--- -----------
+ 15 Andre
+ 21 Alexander
+ 18 Akira
+  4 Mark
+ 23 Radha
+ 25 Sylvie
+ 24 Bela
+  5 Audry
+ 12 Henry
+ 19 Vikram
+ 17 George
+
+ ID FIRST_NAME
+--- -----------
+ 14 Mai
+ 16 Elena
+ 13 Yasmin
+ 22 Eddie
+ 20 Chad
+ 11 Colin
+
+
+已选择17行。
+
+select distinct manager_id
+from s_emp
+where manager_id is not null;
+MANAGER_ID
+----------
+         1
+         2
+         3
+         6
+         7
+         8
+         9
+        10
+
+已选择8行。
+
+例子4:查询出哪些部门的平均工资比31部门的平均工资高？
+思路：
+先查询出31部门的平均工资：
+select avg(salary) from s_emp
+where dept_id = 31;
+AVG(SALARY)
+-----------
+       1400
+
+查询出每个部门的平均工资：
+select dept_id, avg(salary)
+from s_emp
+group by dept_id;
+
+使用查询的嵌套：
+select dept_id, avg(salary)
+from s_emp
+where avg(salary) > (select avg(salary) 
+                        from s_emp
+                        where dept_id = 31)
+group by dept_id;
+
+第 3 行出现错误:
+RA-00934: 此处不允许使用分组函数
+
+结论：where子句中不能使用组函数
+原因：where一定在分组和组函数执行之前就完成了，时机不对。where是分组前的过滤
+
+解决方案：使用having 在分组后过滤    (非关联子查询)
+select dept_id, avg(salary)
+from s_emp
+group by dept_id
+having avg(salary) > (select avg(salary) 
+                        from s_emp
+                        where dept_id = 31);
+
+   DEPT_ID AVG(SALARY)
+---------- -----------
+        10        1450
+        32        1490
+        33        1515
+        35        1450
+        50        2025
+
+例子5：查询出谁的工资比本部门的平均工资高？
+思路：
+第一张表：s_emp表  e表
+     e.first_name      e.salary        e.dept_id
+       Tom               1500               1
+      James              1200               1
+      Mary               1300               2
+       ...
+
+第二张表：  a表   表示每个部门对应的平均薪水
+     a.dept_id         a.avgsal
+      部门id          部门平均薪水
+       1                  1350
+       2                  1200
+
+如何构建出第二张表？通过sql 查询select语句 模拟表
+  是一种抽象，将查询的结果模拟成一张新的表
+
+select dept_id, avg(salary) avgsal
+from s_emp
+group by dept_id;
+
+select first_name, salary, dept_id
+from s_emp;
+
+子查询可以模拟成一张表
+子查询：（关联子查询）
+select e.first_name, e.dept_id, e.salary, a.avgsal
+from s_emp e, (select dept_id, avg(salary) avgsal
+                  from s_emp
+                  group by dept_id) a
+where e.dept_id = a.dept_id
+and e.salary > a.avgsal;
+FIRST_NAME                   DEPT_ID     SALARY     AVGSAL
+------------------------- ---------- ---------- ----------
+Carmen                            50       2500       2025
+LaDoris                           41       1450     1247.5
+Roberta                           42       1250 1081.66667
+Ben                               43       1100        900
+Antoinette                        44       1300       1050
+Marta                             45       1307       1089
+Mai                               34       1525       1160
+Elena                             41       1400     1247.5
+Akira                             42       1200 1081.66667
+Sylvie                            45       1100       1089
+关联子查询:
+ 子查询的结果可以模拟成一张表，和其它的表进行连接，建立一种关联关系。
+本质：select的结果可以模拟成一张表(抽象、归纳)
+
+本条SQL语法要点：
+  表连接（内连接的等值连接） 关联子查询 
+  分组、组函数  过滤where子句
+  给字段、表起别名的技巧
+
+难点：抽象出a表
+
+select e.first_name, e.dept_id, e.salary, a.avgsal
+from s_emp e, (select dept_id, avg(salary) avgsal
+                  from s_emp
+                  group by dept_id) a
+where e.dept_id = a.dept_id
+and e.salary > a.avgsal
+order by e.dept_id desc;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
