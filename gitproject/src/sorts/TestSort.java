@@ -15,6 +15,10 @@ public class TestSort {
 		arr=generate(8);
 		selectSort(arr);
 		System.out.println(Arrays.toString(arr));
+		arr=generate(11);
+		System.out.println(Arrays.toString(arr));
+		quickSort(arr,0,arr.length-1);
+		System.out.println(Arrays.toString(arr));
 	}
 	/**
 	 * 冒泡排序的实现方法
@@ -54,10 +58,46 @@ public class TestSort {
 			}
 		}
 		
-		
-		
-		
 	}
+	
+    public static void quickSort(int[] arr,int low,int high){
+        int i,j,temp,t;
+        if(low>high){
+            return;
+        }
+        i=low;
+        j=high;
+        //temp就是基准位
+        temp = arr[low];
+ 
+        while (true) {
+            //先看右边，依次往左递减
+            while (temp<=arr[j]&&i<j) {
+                j--;
+            }
+            //再看左边，依次往右递增
+            while (temp>=arr[i]&&i<j) {
+                i++;
+            }
+            //如果满足条件则交换
+            if (i<j) {
+                t = arr[j];
+                arr[j] = arr[i];
+                arr[i] = t;
+            }
+            if(i==j){
+            	break;
+            }
+ 
+        }
+        //最后将基准为与i和j相等位置的数字交换
+         arr[low] = arr[i];
+         arr[i] = temp;
+        //递归调用左半数组
+        quickSort(arr, low, j-1);
+        //递归调用右半数组
+        quickSort(arr, j+1, high);
+    }
 	
 	
 	
