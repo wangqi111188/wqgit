@@ -12,9 +12,13 @@ import java.util.List;
 public class YueSeFu {
 
 	public static void main(String[] args) {
-		List res = getYsf(41,3,2);
+		List<Integer> res = getYsf(41,3,2);
+		for (Object o : res) {
+			System.out.print(o+" ");
+		}
+		res.clear();
 	}
-	public static List getYsf(int m,int n,int a){
+	public static List<Integer> getYsf(int m,int n,int a){
 		
 	    List<Integer>  list = new ArrayList<Integer>();
 	    for(int i=1;i<=m;i++){
@@ -31,9 +35,4 @@ public class YueSeFu {
 	    }
 	     return list;
 	}
-	
-	
-	
-	
-
 }
