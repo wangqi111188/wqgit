@@ -3,7 +3,6 @@ package basicprograme;
  * 公鸡每只3元，母鸡每只5元,小鸡3只一元，问如何使用100元买到100只鸡，有多少种买法
  * 编程实现
  * @author Administrator
- *
  */
 public class Test100 {
 	public static void main(String[] args) {

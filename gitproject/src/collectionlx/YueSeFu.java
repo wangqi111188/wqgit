@@ -6,6 +6,16 @@ import java.util.List;
 /**
  * 约瑟夫环算法
  *    m个人，数到n出列，重新开始计数，直到剩下a个人，问剩下的a个人的初始位置
+ *    m=41  n=3  2 
+ *    1,2,3,4,5,6,7,8,9...
+ *    1,2,3出去
+ *    重新计数 
+ *    1,2,3出去
+ *    4,5,6
+ *    ...
+ *    1,2,3
+ *    1+2
+ *    index=(index+n-1)%m  list.remove(index)
  * @author Administrator
  *
  */
@@ -24,9 +34,10 @@ public class YueSeFu {
 	    for(int i=1;i<=m;i++){
 	    	list.add(i);
 	    }
-	    int index=0;
+	    int index=0;// 0,1,2   1,2,3
 	    while(list.size()>a){
 	    	index=(index + n-1)%list.size();
+	    	System.out.println(index);
 	    	list.remove(index);
 	    	for (Integer i : list) {
 				System.out.print(i+" ");
