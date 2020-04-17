@@ -9,10 +9,14 @@ package basicprograme;
 public class TestDiGui {
 
 	public static void main(String[] args) {
-		long m = f(10);
-		System.out.println(m);
-		System.out.println(f1(10));
-		System.out.println(f2(10));
+		long t1 = System.currentTimeMillis();
+		
+		/*long m = f(30);
+		System.out.println(m);*/
+		//System.out.println(f1(40));
+		System.out.println(f2(40));
+		long t2 = System.currentTimeMillis();
+		System.out.println(t2-t1);
 	}
 	/**
 	 * 使用递归求出斐波拉切数列的第i项的值
